@@ -1,9 +1,16 @@
 import { Elysia } from "elysia";
 
 const app = new Elysia()
-  .get("/", () => "Hello Elysia")
-  .get("/ping", () => "pong") // Health Check
-  .get("/hello/:name", ({ params }) => `Hello ${params.name}!`)
-  .listen(3000);
+    .get("/ping", () => "pong")
 
-console.log(`🟢 Server is running at http://localhost:3000`);
+    .get("/hello/:name", ({ params }) => {
+        return `Hello, ${params.name}!`;
+    })
+
+    .get("/hello", ({ query }) => {
+        return `Hello ${query.name}, age: ${query.age}`;
+    })
+
+    .listen(3000);
+
+console.log(`http://localhost:3000`);
