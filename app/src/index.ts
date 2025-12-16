@@ -6,6 +6,6 @@ const app = new Elysia()
     // Lúc này app sẽ có thêm các route: /auth/register, /auth/login...
     .use(auth) 
     
-    .listen(3000);
+    .listen(process.env.PORT || 3000);
 
 console.log(`🦊 Server is running at ${app.server?.hostname}:${app.server?.port}`);

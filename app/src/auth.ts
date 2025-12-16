@@ -42,7 +42,7 @@ export const auth = new Elysia({ prefix: '/auth' })
         return 'Chức năng đăng nhập sẽ làm sau';
     })
 
-    // --- Route: /auth/profile (Placeholder) ---
+    // --- Route: /auth/profile (Placeholder) ---  
     .get('/profile', () => {
         return 'Thông tin user sẽ hiện ở đây';
     });
