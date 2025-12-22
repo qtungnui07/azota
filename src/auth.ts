@@ -1,9 +1,11 @@
 import jwt from "@elysiajs/jwt";
 import { Elysia, t } from "elysia";
+import { PrismaClient } from "@prisma/client";
 
 // Khởi tạo "Database" cục bộ cho module Auth
 // Lưu ý: Nếu muốn dùng biến users này ở file khác, bạn nên tách nó ra file riêng (vd: store.ts)
-const users = new Map();
+// const users = new Map();
+const prisma = new PrismaClient();
 
 export const auth = new Elysia({ prefix: "/auth" })
   .use(
@@ -19,13 +21,18 @@ export const auth = new Elysia({ prefix: "/auth" })
       const { name, email, username, password } = body;
 
       // 1. Check trùng
-      const existingUser = users.get(username);
+      // const existingUser = users.get(username);
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ username: username }, { email: email }],
+        },
+      });
       // Check email (duyệt values)
-      const emailExists = Array.from(users.values()).some(
-        (u) => u.email === email,
-      );
+      // const emailExists = Array.from(users.values()).some(
+      //   (u) => u.email === email,
+      // );
 
-      if (existingUser || emailExists) {
+      if (existingUser) {
         set.status = 401;
         return { message: "Username hoặc Email đã tồn tại!" };
       }
@@ -34,8 +41,16 @@ export const auth = new Elysia({ prefix: "/auth" })
       const hashedPassword = await Bun.password.hash(password);
 
       // 3. Save
-      const newUser = { name, email, username, password: hashedPassword };
-      users.set(username, newUser);
+      // const newUser = { name, email, username, password: hashedPassword };
+      // users.set(username, newUser);
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          username,
+          password: hashedPassword,
+        },
+      });
 
       set.status = 201;
       return { message: "Đăng ký thành công", user: { username, name } };
@@ -57,7 +72,12 @@ export const auth = new Elysia({ prefix: "/auth" })
       const { username, password } = body;
 
       // 1. Tìm user trong Map
-      const user = users.get(username);
+      // const user = users.get(username);
+      const user = await prisma.user.findUnique({
+        where: {
+          username,
+        },
+      });
       if (!user) {
         set.status = 401;
         return { message: "Sai Username hoặc Password" };
@@ -73,6 +93,7 @@ export const auth = new Elysia({ prefix: "/auth" })
       // 3. Tạo Token (JWT Sign)
       // Payload là thông tin ta muốn giấu trong vé (ví dụ: username, name)
       const token = await jwt.sign({
+        userId: user.id,
         username: user.username,
         name: user.name,
       });
